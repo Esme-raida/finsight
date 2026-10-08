@@ -132,4 +132,4 @@ Open `http://localhost:5173` in your browser.
 ---
 
 ## 🛡️ License & Acknowledgments
-Built as part of the AI Engineering Lab. Designed with a tailored economic focus for independent operators navigating volatile market conditions.
+Built as part of my AI Engineering Journey and as my Debut Project. Designed with a tailored economic focus for independent operators navigating volatile market conditions.
