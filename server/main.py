@@ -41,20 +41,23 @@ async def call_gemini_with_retry(prompt, config=None, retries=2):
 
 #an instance of fastAPI
 app = FastAPI()
-#Allowed frontend origins
-origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        #"https://finsight.vercel.app
-]
-#allowing the frontend(REACT) to communicate with the backend(FASTAPI)
+
+#allowing the frontend (React / Vercel / Local) to communicate with the backend
 app.add_middleware(
     CORSMiddleware, 
-    allow_origins=origins, #React app's address
+    allow_origins=["*"], # Allows Vercel preview URLs, production domains, and localhost
     allow_credentials=True,
-    allow_methods=["*"], #allows all HTTP methods like GET, POST, etc.
-    allow_headers=["*"], #allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+@app.get("/")
+def health_check():
+    return {
+        "status": "online",
+        "service": "FinSight Fractional CFO & Runway Decision Engine",
+        "documentation": "/docs"
+    }
 
 #SCHEMAS(PYDANTIC BLUEPRINTS)
 

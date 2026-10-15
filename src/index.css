@@ -194,12 +194,19 @@ body {
 
 .nlp-input-box {
   border: 1px solid var(--border-glow);
-  border-radius: 0.5rem;
-  padding: 0.8rem;
+  border-radius: 0.75rem;
+  padding: 0.45rem 0.65rem 0.45rem 0.9rem;
   background-color: rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: row;
-  gap: 0.5rem
+  align-items: center;
+  gap: 0.65rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nlp-input-box:focus-within {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.25);
 }
 
 .nlp-input-box input {
@@ -207,7 +214,43 @@ body {
   border: none;
   outline: none;
   color: var(--text-main);
-  width: 85%;
+  flex: 1;
+  font-size: 0.95rem;
+  min-width: 0;
+  font-family: inherit;
+}
+
+.extract-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-cyan), #00c6ff);
+  color: #07090e;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 36px;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.extract-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(0, 242, 254, 0.4);
+}
+
+.extract-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .quick-prompt {
@@ -897,15 +940,31 @@ button:hover {
 
 @media (max-width: 640px) {
   .app-layout {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .top-nav {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .welcome-title {
-    font-size: 1.75rem;
+    font-size: 1.65rem;
+  }
+
+  .nlp-input-box {
+    padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .nlp-input-box input {
+    font-size: 0.88rem;
+  }
+
+  .extract-action-btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.72rem;
   }
 
   .quick-prompt {
@@ -915,7 +974,13 @@ button:hover {
 
   .quick-prompt button {
     font-size: 0.8rem;
-    padding: 0.4rem 0.75rem;
+    padding: 0.5rem 0.75rem;
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+
+  .aside-card {
+    padding: 1.25rem;
   }
 
   .summary-metrics {
@@ -935,6 +1000,12 @@ button:hover {
   }
 
   .aside-card h1 {
-    font-size: 3rem;
+    font-size: 2.75rem;
+  }
+
+  .modal-container {
+    width: 95%;
+    max-width: 95%;
+    padding: 1.25rem;
   }
 }

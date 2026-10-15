@@ -101,6 +101,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 }}
                 onKeyDown={handleKeyDown}
                 isExtracting={isExtracting}
+                onExtract={handleExtractAI}
             />
             {feedback && (
                 <div className={`scenario-feedback-pill ${feedback.type}`}>

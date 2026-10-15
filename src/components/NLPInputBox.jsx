@@ -1,17 +1,34 @@
-export default function NLPInputBox({ financials, onChange, onKeyDown, isExtracting }) {
+export default function NLPInputBox({ financials, onChange, onKeyDown, isExtracting, onExtract }) {
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!isExtracting && onExtract) {
+            onExtract();
+        }
+    };
+
     return (
-        <div className="nlp-input-box">
-            {isExtracting ? (
-                <span className="spinner"></span>
-            ) : (
-                <span className="sparkle">✦</span>
-            )}
-            <input type="text"
+        <form className="nlp-input-box" onSubmit={handleSubmit}>
+            <span className="sparkle" aria-hidden="true">✦</span>
+            <input
+                type="text"
                 placeholder="e.g. I make 2.5m/mo and spend 900k, can I hire a designer for 350k?"
                 value={financials.query}
                 onChange={onChange}
                 onKeyDown={onKeyDown}
+                aria-label="Financial scenario question"
             />
-        </div>
-    )
+            <button
+                type="submit"
+                className="extract-action-btn"
+                disabled={isExtracting || !financials.query?.trim()}
+                aria-label="Extract financial numbers"
+            >
+                {isExtracting ? (
+                    <span className="spinner"></span>
+                ) : (
+                    <span>Analyze</span>
+                )}
+            </button>
+        </form>
+    );
 }
