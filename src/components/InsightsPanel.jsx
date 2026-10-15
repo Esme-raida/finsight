@@ -3,14 +3,28 @@ import Bullet from "./Bullets.jsx";
 import MetricCard from "./MetricCard.jsx";
 
 export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, totalExpensesPlusNewDecision,
-    onUpdate, getFinancialScenarioReport, isLoading }) {
+    getFinancialScenarioReport, isLoading }) {
 
+    const getVerdict = (cashLeft, runwayMonths) => {
+        const runway = Number(runwayMonths);
+
+        if (cashLeft > 0 && runway >= 6) {
+            return "SAFE TO PROCEED";
+        }
+        if ((cashLeft >= 0 && runway >= 3 && runway < 6) || (cashLeft < 0 && runway >= 6)) {
+            return "PROCEED WITH CAUTION";
+        }
+        return "CRITICAL RISK - HOLD";
+    };
+
+    const verdict = getVerdict(cashLeft, runwayMonths);
+    const riskLevel = verdict === "SAFE TO PROCEED" ? "LOW" : (verdict === "PROCEED WITH CAUTION" ? "MODERATE" : "HIGH");
 
     return (
         <aside className="insights-panel">
             <div className="aside-card glass-card">
                 {/*Status badge*/}
-                <StatusBadge value={cashLeft > 0 ? "SAFE TO PROCEED" : "HIGH RISK - RECONSIDER"} />
+                <StatusBadge value={verdict} />
                 <h1>{runwayMonths}</h1>
                 <span>Months before money runs out (Runway)</span>
                 <div className="runway-meter">
@@ -55,9 +69,9 @@ export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, tot
 
                 <MetricCard
                     metricLabel="RISK LEVEL"
-                    metricValue={cashLeft > 0 ? "LOW" : "HIGH"}
+                    metricValue={riskLevel}
                 />
             </div>
         </aside>
-    )
+    );
 }

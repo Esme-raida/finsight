@@ -5,168 +5,189 @@
 from google import genai
 from dotenv import load_dotenv
 import time
+import sys
+from main import generate_financial_scenario_report, ScenarioRequest
+import asyncio
+
+# Configure UTF-8 encoding on Windows to print the Naira (₦) symbol cleanly
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 load_dotenv()
 client = genai.Client()
 
-#=====================EVALUATION=======================#
-#Designing my test dataset(list of cases I want to test for)
+#==========================EVALUATION==========================#
+
+#Designing my test dataset (list of cases I want to test for)
 
 test_cases = [
-    # CRITICAL RISK 
+    # ==================== 1. CRITICAL RISK (5 Cases) ==================== #
     {
-        "scenario": "Extreme Danger: Buying luxury car with only ₦150k in savings",
-        "savings": 150000,
-        "income": 400000,
-        "expenses": 380000,
-        "decisionCost": 2500000,
-        "cashLeft": 400000 - (380000 + 2500000),
-        "runwayMonths": 0.1,
-        "expected": "CRITICAL RISK - HOLD"
+        "scenario": "The Vanity Metric Trap: Earns ₦4M/mo, but has only ₦200k in savings, testing ₦300k hire",
+        "savings": 200000,
+        "income": 4000000,
+        "expenses": 3500000,
+        "decisionCost": 300000,
+        "expected": "CRITICAL RISK - HOLD"  # Runway: 0.1 mo (Insolvency in 3 days)
     },
     {
-        "scenario": "The Overhead Trap: Lekki rent + diesel eating 85% of income, testing ₦400k workspace",
+        "scenario": "The Big Balance Illusion: ₦18M in savings, but monthly burn is ₦6.8M, testing ₦600k PR agency",
+        "savings": 18000000,
+        "income": 5500000,
+        "expenses": 6200000,
+        "decisionCost": 600000,
+        "expected": "CRITICAL RISK - HOLD"  # Negative cashflow + Runway: 2.6 mo
+    },
+    {
+        "scenario": "The Ghosting Retainer: Income dropped to ₦0, expenses ₦550k, savings ₦2M, testing ₦150k tool",
+        "savings": 2000000,
+        "income": 0,
+        "expenses": 550000,
+        "decisionCost": 150000,
+        "expected": "CRITICAL RISK - HOLD"  # Zero income + Runway: 2.9 mo
+    },
+    {
+        "scenario": "Premature Agency Scale: Hiring 2 staff at ₦500k/mo with only ₦1.5M in savings",
+        "savings": 1500000,
+        "income": 1100000,
+        "expenses": 800000,
+        "decisionCost": 500000,
+        "expected": "CRITICAL RISK - HOLD"  # Deficit spending + Runway: 1.2 mo
+    },
+    {
+        "scenario": "The Lekki Overhead Trap: Rent + diesel eating 85% of income, testing ₦400k workspace",
         "savings": 1800000,
         "income": 1200000,
         "expenses": 1020000,
         "decisionCost": 400000,
-        "cashLeft": 1200000 - (1020000 + 400000), # -₦220k monthly deficit!
-        "runwayMonths": 1.2,
-        "expected": "CRITICAL RISK - HOLD"
-    },
-    {
-        "scenario": "The Ghosting Client: Client delays invoice, income drops to ₦0, testing ₦350k hire",
-        "savings": 2000000,
-        "income": 0,
-        "expenses": 600000,
-        "decisionCost": 350000,
-        "cashLeft": 0 - (600000 + 350000), # -₦950k bleed/month
-        "runwayMonths": 2.1,
-        "expected": "CRITICAL RISK - HOLD"
-    },
-    {
-        "scenario": "Premature Agency Scale: Hiring 2 full-time staff with only ₦1.5M in savings",
-        "savings": 1500000,
-        "income": 1000000,
-        "expenses": 650000,
-        "decisionCost": 600000,
-        "cashLeft": 1000000 - (650000 + 600000), # -₦250k deficit
-        "runwayMonths": 1.2,
-        "expected": "CRITICAL RISK - HOLD"
+        "expected": "CRITICAL RISK - HOLD"  # -₦220k monthly bleed + Runway: 1.3 mo
     },
 
-    # SAFE TO PROCEED
+    # ==================== 2. PROCEED WITH CAUTION (5 Cases) ==================== #
     {
-        "scenario": "The Safe Expansion: ₦12M in savings, ₦3.5M income, hiring social media lead for ₦150k",
-        "savings": 12000000,
-        "income": 3500000,
-        "expenses": 600000,
-        "decisionCost": 150000,
-        "cashLeft": 3500000 - (600000 + 150000), # ₦2.75M monthly surplus
-        "runwayMonths": 16.0,
-        "expected": "SAFE TO PROCEED"
-    },
-
-    # PROCEED WITH CAUTION
-    {
-        "scenario": "Productivity Workstation: ₦8M in savings, ₦2.5M income, buying M3 MacBook for ₦1.2M",
-        "savings": 8000000,
-        "income": 2500000,
-        "expenses": 800000,
-        "decisionCost": 1200000,
-        "cashLeft": 2500000 - (800000 + 1200000), # ₦500k surplus left
-        "runwayMonths": 7.0,
-        "expected": "PROCEED WITH CAUTION"
+        "scenario": "The Controlled Strategic Burn: Deficit of -₦200k/mo after hiring editor, but has ₦14M cushion",
+        "savings": 14000000,
+        "income": 1500000,
+        "expenses": 1400000,
+        "decisionCost": 300000,
+        "expected": "PROCEED WITH CAUTION"  # Negative cashflow, but 8.2 mo runway funds the bet
     },
     {
-        "scenario": "The Foreign Exchange Windfall: Landed $2,000/mo (₦3M) remote contract, buying ₦1.8M solar inverter",
-        "savings": 9000000,
-        "income": 3000000,
-        "expenses": 700000,
-        "decisionCost": 1800000,
-        "cashLeft": 3000000 - (700000 + 1800000), # ₦500k surplus left in month 1
-        "runwayMonths": 8.0,
-        "expected": "PROCEED WITH CAUTION"
+        "scenario": "The 5.8-Month Razor's Edge: Surplus is +₦250k, but runway sits at exactly 5.8 months",
+        "savings": 4060000,
+        "income": 950000,
+        "expenses": 500000,
+        "decisionCost": 200000,
+        "expected": "PROCEED WITH CAUTION"  # Positive cashflow, but buffer is tight (< 6.0 mo)
     },
     {
-        "scenario": "The Co-Working Upgrade: Moving to Wuse 2 desk with 4.5 months of emergency runway",
+        "scenario": "Wuse 2 Co-Working Desk: Moving to dedicated desk with 4.5 months of emergency runway",
         "savings": 3800000,
         "income": 1500000,
         "expenses": 550000,
         "decisionCost": 300000,
-        "cashLeft": 1500000 - (550000 + 300000), # ₦650k surplus
-        "runwayMonths": 4.5,
-        "expected": "PROCEED WITH CAUTION"
+        "expected": "PROCEED WITH CAUTION"  # Positive cashflow, 4.5 mo buffer
     },
     {
-        "scenario": "Sales Shock: Local client dropped retainer by 20%, testing ₦250k ad spend",
+        "scenario": "Sales Shock: Local client dropped retainer by 20%, testing ₦250k ad spend test",
         "savings": 3500000,
         "income": 1200000,
         "expenses": 500000,
         "decisionCost": 250000,
-        "cashLeft": 1200000 - (500000 + 250000), # ₦450k surplus
-        "runwayMonths": 4.6,
-        "expected": "PROCEED WITH CAUTION"
+        "expected": "PROCEED WITH CAUTION"  # Runway: 4.7 mo after revenue drop
     },
     {
-        "scenario": "Equipment Lease: Upgrading camera rig @ ₦350k/mo with ₦3M in savings",
-        "savings": 3000000,
+        "scenario": "Equipment Lease: Upgrading camera rig @ ₦350k/mo with ₦3.2M in savings",
+        "savings": 3200000,
         "income": 1400000,
-        "expenses": 600000,
+        "expenses": 550000,
         "decisionCost": 350000,
-        "cashLeft": 1400000 - (600000 + 350000), # ₦450k surplus
-        "runwayMonths": 3.8,
-        "expected": "PROCEED WITH CAUTION"
+        "expected": "PROCEED WITH CAUTION"  # Runway: 3.6 mo margin
+    },
+
+    # ==================== 3. SAFE TO PROCEED (5 Cases) ==================== #
+    {
+        "scenario": "The Resilient Freelancer: ₦12M in savings, ₦3.5M income, hiring social media lead for ₦150k",
+        "savings": 12000000,
+        "income": 3500000,
+        "expenses": 600000,
+        "decisionCost": 150000,
+        "expected": "SAFE TO PROCEED"  # ₦2.75M surplus, 16.0 mo runway
+    },
+    {
+        "scenario": "High-Retainer Senior Hire: ₦20M savings, ₦5M income, hiring lead engineer at ₦600k/mo",
+        "savings": 20000000,
+        "income": 5000000,
+        "expenses": 1500000,
+        "decisionCost": 600000,
+        "expected": "SAFE TO PROCEED"  # ₦2.9M surplus, 9.5 mo runway
+    },
+    {
+        "scenario": "Productivity Stack Upgrade: ₦6M savings, ₦2M income, adding ₦80k/mo Figma + Claude AI tools",
+        "savings": 6000000,
+        "income": 2000000,
+        "expenses": 500000,
+        "decisionCost": 80000,
+        "expected": "SAFE TO PROCEED"  # ₦1.42M surplus, 10.3 mo runway
+    },
+    {
+        "scenario": "Private Studio with Deep Cushion: ₦8M savings, ₦2.2M income, moving to ₦180k private desk",
+        "savings": 8000000,
+        "income": 2200000,
+        "expenses": 500000,
+        "decisionCost": 180000,
+        "expected": "SAFE TO PROCEED"  # ₦1.52M surplus, 11.8 mo runway
+    },
+    {
+        "scenario": "Operator Health Plan: ₦5.5M savings, ₦1.8M income, committing ₦90k/mo family HMO health plan",
+        "savings": 5500000,
+        "income": 1800000,
+        "expenses": 450000,
+        "decisionCost": 90000,
+        "expected": "SAFE TO PROCEED"  # ₦1.26M surplus, 10.2 mo runway
     }
 ]
+
 # ===================== THE EVALUATION LOOP ===================== #
-passed = 0
-total = len(test_cases)
+async def run_evals ():
+    passed = 0
+    total = len(test_cases)
 
-print("\n[START]: STARTING AI FINANCIAL CFO EVALS...\n" + "=" * 50)
+    print("\n[START]: STARTING AI FINANCIAL CFO EVALS...\n" + "=" * 50)
 
-for index, case in enumerate(test_cases, 1):
-    print(f"\n[Test {index}/{total}] Running: {case['scenario']}...")
+    for index, case in enumerate(test_cases, 1):
+        print(f"\n[Test {index}/{total}] Running: {case['scenario']}...")
 
-    prompt = f"""
-    You are an elite Fractional CFO in Nigeria.
-    
-    A client presents this scenario:
-    - Savings: ₦{case['savings']:,.0f}
-    - Monthly Income: ₦{case['income']:,.0f}
-    - Monthly Expenses: ₦{case['expenses']:,.0f}
-    - Proposed Decision Cost: ₦{case['decisionCost']:,.0f}/month
-    - Emergency Runway: {case['runwayMonths']} months
+        #Building the scenario
+        scenario = ScenarioRequest(
+            query=case["scenario"],
+            income=case["income"],
+            expenses=case["expenses"],
+            savings=case["savings"],
+            decisionCost=case["decisionCost"]
+        )
 
-    Choose ONE decision:
-    1. SAFE TO PROCEED
-    2. PROCEED WITH CAUTION
-    3. CRITICAL RISK - HOLD
+        #calling the main function
+        start_time = time.time()
+        result = await generate_financial_scenario_report(scenario)
+        duration = round(time.time() - start_time, 2)
+     
+        report = result["report"]
+        actual_verdict = report["verdict"]
 
-    Provide your decision and a 1-sentence explanation why.
-    """
+        # The simple check: did the model include the expected verdict?
+        if case["expected"] == actual_verdict and len(report["tactical_recommendations"]) >= 3:
+            print(f"  [PASS]: Verdict [{actual_verdict}] ({duration}s)")
+            passed += 1
+        else:
+            print(f"  [FAIL]: Expected [{case['expected']}], Got [{actual_verdict}] ({duration}s)")
 
-    start_time = time.time()
+    # The accuracy calculation
+    accuracy = (passed / total) * 100
+    print("\n" + "=" * 50)
+    print(f"EVALUATION COMPLETE: {passed}/{total} Passed ({accuracy:.1f}% Accuracy)")
+    print("=" * 50 + "\n")
 
-    # Call the model
-    response = client.models.generate_content(
-        model="gemini-3.5-flash-lite",
-        contents=prompt,
-        config={"temperature": 0}
-    )
-    duration = round(time.time() - start_time, 2)
-    model_result = response.text
-
-    # The simple check: did the model include the expected verdict?
-    if case['expected'] in model_result:
-        print(f"[PASS]: Found [{case['expected']}] ({duration}s)")
-        passed += 1
-    else:
-        print(f"[FAIL]: Expected [{case['expected']}] ({duration}s)")
-        print(f"   AI Output: {model_result.strip()}")
-
-# The accuracy calculation
-accuracy = (passed / total) * 100
-print("\n" + "=" * 50)
-print(f"EVALUATION COMPLETE: {passed}/{total} Passed ({accuracy:.1f}% Accuracy)")
-print("=" * 50 + "\n")
+#Running the script 
+if __name__ == "__main__":
+    asyncio.run(run_evals())

@@ -7,11 +7,10 @@ export default function NLPInputBox({ financials, onChange, onKeyDown, isExtract
                 <span className="sparkle">✦</span>
             )}
             <input type="text"
-                placeholder="Ask anything e.g Can I buy a new equipment?"
+                placeholder="e.g. I make 2.5m/mo and spend 900k, can I hire a designer for 350k?"
                 value={financials.query}
                 onChange={onChange}
                 onKeyDown={onKeyDown}
-
             />
         </div>
     )

@@ -9,10 +9,9 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
 
 
     const [isExtracting, setIsExtracting] = useState(false);
-    const [extractedSuccess, setExtractedSuccess] = useState(false);
+    const [feedback, setFeedback] = useState(null);
 
     const handleExtractAI = async () => {
-
         setIsExtracting(true); //turn on the loading spinner
         try {
             //send the data typed by the user to python
@@ -29,6 +28,14 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
             const result = await response.json();
             const data = result.data;
 
+            //Check if any financial numbers were actually detected
+            const hasUpdates = (
+                data.income !== null ||
+                data.expenses !== null ||
+                data.savings !== null ||
+                data.decisionCost !== null
+            );
+
             //If python found a number, update the slider....
             if (data.income !== null) onUpdate('income', data.income);
             if (data.expenses !== null) onUpdate('expenses', data.expenses);
@@ -36,9 +43,26 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
             if (data.decisionCost !== null) onUpdate('decisionCost', data.decisionCost);
             if (data.decisionTitle !== null) onUpdate('query', data.decisionTitle);
 
-            setExtractedSuccess(true);
+            if (hasUpdates) {
+                setFeedback({
+                    type: "success",
+                    title: "Numbers updated!",
+                    message: "Review your sliders below, tweak any values, and click Generate Financial Scenario Report for your CFO briefing."
+                });
+            } else {
+                setFeedback({
+                    type: "info",
+                    title: "No numbers detected in your question",
+                    message: "We couldn't spot any amounts in that text. Try including figures (e.g. 'I make 2m/mo, can I rent for 400k?') or adjust the sliders manually below!"
+                });
+            }
         } catch (error) {
             console.error("Extraction failed", error);
+            setFeedback({
+                type: "info",
+                title: "Extraction offline",
+                message: "Could not connect to the extraction service. You can adjust the sliders manually below."
+            });
         } finally {
             setIsExtracting(false); //turn off the loading spinner when done
         }
@@ -58,19 +82,34 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 do you want <span>to test today?</span>
             </h1>
 
+            {/* How It Works Micro-Steps */}
+            <div className="workflow-steps">
+                <span className="workflow-label">HOW IT WORKS</span>
+                <div className="step-tag"><span className="step-circle">1</span> Ask / Type Plan</div>
+                <span className="step-arrow">→</span>
+                <div className="step-tag"><span className="step-circle">2</span> Fine-tune Sliders</div>
+                <span className="step-arrow">→</span>
+                <div className="step-tag"><span className="step-circle">3</span> Get financial report</div>
+            </div>
+
             {/*NLP Input box */}
             <NLPInputBox
                 financials={financials}
-                onChange={(e) => { onUpdate('query', e.target.value) }}
+                onChange={(e) => {
+                    onUpdate('query', e.target.value);
+                    if (feedback) setFeedback(null);
+                }}
                 onKeyDown={handleKeyDown}
                 isExtracting={isExtracting}
             />
-            {extractedSuccess && (
-                <div className="scenario-feedback-pill">
-                    <h3><strong>
-                        <span>✦ &nbsp; </span>Numbers updated!</strong></h3>
-                    Review your sliders below, read the insights
-                    and you can then click <strong> Generate Scenario Report</strong> below to get your briefing.
+            {feedback && (
+                <div className={`scenario-feedback-pill ${feedback.type}`}>
+                    <div className="feedback-content">
+                        <h3><strong>
+                            <span>✦ &nbsp; </span>{feedback.title}</strong></h3>
+                        <p>{feedback.message}</p>
+                    </div>
+                    <button className="feedback-dismiss-btn" onClick={() => setFeedback(null)}>✕</button>
                 </div>
             )}
             <div className="quick-prompt">
@@ -85,7 +124,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                     className="glass-card quick-prompt-btn-2"
                     onClick={() => {
                         onUpdate("query", "What if sales drop by 20%");
-                        onUpdate("decisionCost", (financials.income - incomeDropby20Percent))
+                        onUpdate("income", (incomeDropby20Percent))
                     }}>What if sales drop 20%?
                 </button>
                 <button
