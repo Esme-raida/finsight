@@ -5,11 +5,10 @@ import NLPInputBox from "./NLPInputBox";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-export default function DecisionDeck({ financials, balance, cashLeft, incomeDropby20Percent, onUpdate }) {
+export default function DecisionDeck({ financials, balance, cashLeft, incomeDropby20Percent, onUpdate, feedback, setFeedback }) {
 
 
     const [isExtracting, setIsExtracting] = useState(false);
-    const [feedback, setFeedback] = useState(null);
 
     const handleExtractAI = async () => {
         setIsExtracting(true); //turn on the loading spinner

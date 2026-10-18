@@ -5,6 +5,14 @@ import MetricCard from "./MetricCard.jsx";
 export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, totalExpensesPlusNewDecision,
     getFinancialScenarioReport, isLoading }) {
 
+    //clean currency helper to prevent something like this ₦-350,000
+
+    const formatNaira = (amt) => {
+        const absoluteValue = Math.abs(amt).toLocaleString();
+        return amt < 0 ? `-₦${absoluteValue}` : `₦${absoluteValue}`
+    };
+
+
     const getVerdict = (cashLeft, runwayMonths) => {
         const runway = Number(runwayMonths);
 
@@ -39,7 +47,7 @@ export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, tot
                 <ul className="bullets">
                     <Bullet
                         strongValue="Can you afford it?"
-                        strongSpan={cashLeft > 0 ? `The commitment leaves ₦${cashLeft.toLocaleString()} available each month.` : `The commitment exceeds your monthly available cash`}
+                        strongSpan={cashLeft > 0 ? `The commitment leaves ${formatNaira(cashLeft)} available each month.` : `The commitment exceeds your monthly available cash`}
                     />
                     <Bullet
                         strongValue="Maintain a buffer"

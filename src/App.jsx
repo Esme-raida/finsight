@@ -20,11 +20,14 @@ function App() {
 
   //initializing with the blueprnt/default values
   const [financials, setFinancials] = useState(defaultFinancials);
+  //for tracking the opening and closing of the bannner
+  const [feedback, setFeedback] = useState(null);
 
   const handleReset = () => {
     setFinancials(defaultFinancials);
     setData(null);
     setError(null);
+    setFeedback(null);
   }
 
   //balance after current expenses
@@ -39,8 +42,9 @@ function App() {
   const newCashLeft = incomeDropby20Percent - totalExpensesPlusNewDecision;
 
   //runway : how many months savings can last if revenue drops to 0
+  //with zero burn, savings lasts indefinitely
   const runway = totalExpensesPlusNewDecision > 0 ?
-    (financials.savings) / (totalExpensesPlusNewDecision) : 0;
+    (financials.savings / totalExpensesPlusNewDecision) : 99.0;
   const runwayMonths = runway.toFixed(1);
 
   /*this function was created so that each component can update financials without calling setFinancials
@@ -110,7 +114,9 @@ function App() {
           balance={balance}
           cashLeft={cashLeft}
           incomeDropby20Percent={incomeDropby20Percent}
-          onUpdate={UpdateFinancials} />
+          onUpdate={UpdateFinancials}
+          feedback={feedback}
+          setFeedback={setFeedback} />
         {/*RIGHT COLUMN*/}
         <InsightsPanel
           balance={balance}
