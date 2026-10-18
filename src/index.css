@@ -51,6 +51,11 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   background-color: var(--bg-app);
   background-image: radial-gradient(circle at 95% 5%, rgba(0, 242, 254, 0.18) 0%, transparent 40%),
@@ -74,7 +79,8 @@ body {
 .app-layout {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  width: 100%;
 }
 
 .top-nav {
@@ -83,7 +89,9 @@ body {
   align-items: center;
   border-bottom: 1px solid var(--border-glow);
   padding-bottom: 1rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .brand-name {
@@ -168,10 +176,19 @@ body {
 }
 
 .main-workspace {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  /*Left slightly wider than the right*/
-  gap: 3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+}
+
+.main-workspace > section {
+  flex: 1.3 1 360px;
+  min-width: 0;
+}
+
+.main-workspace > aside {
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
 .decision-workspace {
@@ -182,6 +199,8 @@ body {
   margin-top: 1rem;
   margin-bottom: 1rem;
   font-weight: 600;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  line-height: 1.25;
 }
 
 .financial-decision {
@@ -255,8 +274,8 @@ body {
 
 .quick-prompt {
   display: flex;
-  flex-direction: row;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
@@ -267,8 +286,10 @@ body {
   border: 1px solid var(--border-glow);
   color: white;
   border-radius: 8px;
-  padding: 0.5rem;
+  padding: 0.5rem 0.85rem;
   background-color: rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+  flex: 1 1 auto;
 }
 
 .sliders {
@@ -312,8 +333,8 @@ body {
 
 .summary-metrics {
   display: flex;
-  flex-direction: row;
-  gap: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
   margin-top: 2rem;
   font-size: 0.8rem;
 }
@@ -321,12 +342,13 @@ body {
 .metric {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 180px;
+  min-width: 140px;
 }
 
 .metric:not(:first-child) {
   border-left: 1px solid var(--border-glass);
-  padding-left: 2rem;
+  padding-left: 1.5rem;
 }
 
 .metric label {
@@ -378,12 +400,11 @@ body {
 }
 
 .aside-card h1 {
-  font-size: 4rem;
+  font-size: clamp(2.5rem, 6vw, 4rem);
   line-height: 1;
   margin: 0.75rem 0 0.25rem 0;
   font-family: var(--font-mono);
   color: var(--text-main);
-
 }
 
 .aside-card>span {
@@ -502,17 +523,17 @@ body {
 
 .metrics {
   display: flex;
-  flex-direction: row;
-  gap: 1rem
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .metric-card-1,
 .metric-card-2 {
   display: flex;
-  flex: 1;
+  flex: 1 1 140px;
   flex-direction: column;
   font-size: 0.7rem;
-  gap: 1rem;
+  gap: 0.75rem;
   padding: 1.25rem;
 }
 
@@ -920,87 +941,29 @@ button:hover {
 }
 
 /* =========================================
-   RESPONSIVE DESIGN (Tablets & Mobile)
+   MOBILE POLISH (Screens under 640px)
    ========================================= */
 
-@media (max-width: 1024px) {
+@media (max-width: 640px) {
   .app-layout {
-    padding: 1.5rem;
-  }
-
-  .main-workspace {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-  }
-
-  .welcome-title {
-    font-size: 2.2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .app-layout {
-    padding: 1rem 0.75rem;
-  }
-
-  .top-nav {
-    margin-bottom: 1.25rem;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .welcome-title {
-    font-size: 1.75rem;
-  }
-
-  .nlp-input-box {
-    padding: 0.35rem 0.5rem 0.35rem 0.75rem;
-    gap: 0.5rem;
-  }
-
-  .nlp-input-box input {
-    font-size: 0.88rem;
-  }
-
-  .extract-action-btn {
-    padding: 0.45rem 0.75rem;
-    font-size: 0.72rem;
-  }
-
-  .quick-prompt {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .quick-prompt button {
-    font-size: 0.8rem;
-    padding: 0.5rem 0.75rem;
-    flex: 1 1 auto;
-    min-width: 140px;
+    padding: 0.75rem;
   }
 
   .aside-card {
     padding: 1.25rem;
   }
 
-  .summary-metrics {
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
   .metric:not(:first-child) {
     border-left: none;
     border-top: 1px solid var(--border-glass);
     padding-left: 0;
-    padding-top: 1.25rem;
+    padding-top: 1rem;
   }
 
-  .metrics {
-    flex-direction: column;
-  }
-
-  .aside-card h1 {
-    font-size: 2.75rem;
+  .quick-prompt button {
+    width: 100%;
+    flex: 1 1 100%;
+    text-align: left;
   }
 
   .modal-container {
@@ -1008,24 +971,8 @@ button:hover {
     max-width: 95%;
     padding: 1.25rem;
   }
-}
 
-@media (max-width: 480px) {
-  .welcome-title {
-    font-size: 1.45rem;
-  }
-
-  .quick-prompt button {
+  .modal-footer .primary-action-btn {
     width: 100%;
-    flex: 1 1 100%;
-  }
-
-  .aside-card h1 {
-    font-size: 2.25rem;
-  }
-
-  .modal-container {
-    width: 96%;
-    padding: 1rem;
   }
 }
