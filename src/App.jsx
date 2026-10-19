@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react';
 import './App.css';
 import Header from './components/Header';
 import DecisionDeck from './components/DecisionDeck';
@@ -18,6 +18,14 @@ const defaultFinancials = {
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function App() {
+
+  useEffect(() => {
+    // Silently wake up the backend as soon as the app loads on mobile/desktop
+    fetch(`${API_BASE_URL}/`).catch(() => {
+      // Ignore error if it's sleeping...the HTTP request itself triggers Render to wake up!
+    });
+  }, []);
+
 
   //initializing with the blueprnt/default values
   const [financials, setFinancials] = useState(defaultFinancials);

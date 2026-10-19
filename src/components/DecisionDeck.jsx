@@ -2,6 +2,7 @@ import { useState } from "react";
 import Slider from "./Sliders";
 import SummaryMetric from "./SummaryMetric";
 import NLPInputBox from "./NLPInputBox";
+import { formatNaira } from "../utils/format.js";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -36,12 +37,20 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
             );
 
             //If python found a number, update the slider....
-            if (data.income !== null) onUpdate('income', data.income);
-            if (data.expenses !== null) onUpdate('expenses', data.expenses);
-            if (data.savings !== null) onUpdate('savings', data.savings);
-            if (data.decisionCost !== null) onUpdate('decisionCost', data.decisionCost);
-            if (data.decisionTitle !== null) onUpdate('query', data.decisionTitle);
-            if (data.expenseType !== null) onUpdate('expenseType', data.expenseType);
+            if (data.income !== null && data.income !== undefined) onUpdate('income', data.income);
+            if (data.expenses !== null && data.expenses !== undefined) onUpdate('expenses', data.expenses);
+            if (data.savings !== null && data.savings !== undefined) onUpdate('savings', data.savings);
+            if (data.decisionCost !== null && data.decisionCost !== undefined) onUpdate('decisionCost', data.decisionCost);
+            if (data.decisionTitle) onUpdate('query', data.decisionTitle);
+
+            // Handle expenseType with heuristic fallback for one-time purchases
+            if (data.expenseType) {
+                onUpdate('expenseType', data.expenseType);
+            } else {
+                const rawText = (financials.query || "").toLowerCase();
+                const isOneTime = /laptop|macbook|car|vehicle|equipment|camera|generator|inverter|furniture|setup|purchase|buy|one-time|fee/i.test(rawText);
+                onUpdate('expenseType', isOneTime ? 'one_time' : 'recurring');
+            }
             if (hasUpdates) {
                 setFeedback({
                     type: "success",
@@ -118,6 +127,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                     onClick={() => {
                         onUpdate("query", "Can I afford to hire a designer for ₦350,000 per month?");
                         onUpdate("decisionCost", 350000);
+                        onUpdate("expenseType", "recurring");
                     }}>Can I hire a designer?
                 </button>
                 <button
@@ -130,9 +140,10 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 <button
                     className="glass-card quick-prompt-btn-3"
                     onClick={() => {
-                        onUpdate("query", "Dedicated desk at a co-working hub in Wuse 2 for ₦250,000/month");
-                        onUpdate("decisionCost", 250000)
-                    }}>Co-working desk in Wuse 2?</button>
+                        onUpdate("query", "Can I buy an M3 MacBook Pro for ₦2,200,000?");
+                        onUpdate("decisionCost", 2200000);
+                        onUpdate("expenseType", "one_time");
+                    }}>Buy M3 MacBook Pro?</button>
             </div>
 
             {/*Sliders*/}
@@ -141,7 +152,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 <div className="slider-1">
                     <Slider
                         label="CURRENT SAVINGS"
-                        displayValue={`₦${financials.savings.toLocaleString()}`}
+                        displayValue={formatNaira(financials.savings)}
                         min="0"
                         max={Math.max(30000000, Number(financials.savings))}
                         step="50000"
@@ -154,7 +165,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 <div className="slider-2">
                     <Slider
                         label="MONTHLY INCOME"
-                        displayValue={`₦${financials.income.toLocaleString()}`}
+                        displayValue={formatNaira(financials.income)}
                         min="0"
                         max={Math.max(10000000, Number(financials.income))}
                         step="25000"
@@ -167,7 +178,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 <div className="slider-3">
                     <Slider
                         label="MONTHLY EXPENSES"
-                        displayValue={`₦${financials.expenses.toLocaleString()}`}
+                        displayValue={formatNaira(financials.expenses)}
                         min="0"
                         max={Math.max(5000000, Number(financials.expenses))}
                         step="10000"
@@ -176,13 +187,27 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                     />
                 </div>
 
-                {/*DECISION'S MONTHLY COST*/}
+                {/*DECISION COST & TYPE TOGGLE*/}
                 <div className="slider-4">
+                    <div className="expense-type-toggle">
+                        <button
+                            type="button"
+                            className={`type-toggle-btn ${financials.expenseType !== "one_time" ? "active" : ""}`}
+                            onClick={() => onUpdate("expenseType", "recurring")}>
+                            ⚡ Monthly Commitment (OpEx)
+                        </button>
+                        <button
+                            type="button"
+                            className={`type-toggle-btn ${financials.expenseType === "one_time" ? "active" : ""}`}
+                            onClick={() => onUpdate("expenseType", "one_time")}>
+                            📦 One-Time Purchase (CapEx)
+                        </button>
+                    </div>
                     <Slider
                         label={financials.expenseType === "one_time" ? "ONE-TIME PURCHASE COST" : "DECISION'S MONTHLY COST"}
-                        displayValue={`₦${financials.decisionCost.toLocaleString()}`}
+                        displayValue={formatNaira(financials.decisionCost)}
                         min="0"
-                        max={Math.max(5000000, Number(financials.decisionCost))}
+                        max={Math.max(10000000, Number(financials.decisionCost))}
                         step="50000"
                         value={financials.decisionCost}
                         onChange={(e) => onUpdate('decisionCost', e.target.value)}
@@ -196,21 +221,21 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 {/*CURRENT SURPLUS*/}
                 <SummaryMetric
                     label="BALANCE AFTER CURRENT EXPENSES"
-                    value={`₦${balance.toLocaleString()}`}
-                    isDanger={balance < 0 ? true : false}
+                    value={formatNaira(balance)}
+                    isDanger={balance < 0}
                 />
 
                 {/*AFTER DECISION*/}
                 <SummaryMetric
                     label="CASH LEFT AFTER DECISION"
-                    value={`₦${cashLeft.toLocaleString()}`}
+                    value={formatNaira(cashLeft)}
                     isDanger={cashLeft < 0}
                 />
 
-                {/*MONTHLY IMPACT*/}
+                {/*MONTHLY IMPACT / ONE-TIME COST*/}
                 <SummaryMetric
                     label={financials.expenseType === "one_time" ? "ONE-TIME PURCHASE" : "DECISION'S MONTHLY COST"}
-                    value={`₦${financials.decisionCost.toLocaleString()}`}
+                    value={formatNaira(financials.decisionCost)}
                     isDanger={false}
                 />
             </div>

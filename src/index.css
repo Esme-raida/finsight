@@ -293,6 +293,46 @@ body {
   flex: 1 1 auto;
 }
 
+.expense-type-toggle {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 4px;
+  margin-bottom: 0.75rem;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.type-toggle-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.type-toggle-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.type-toggle-btn.active {
+  background: rgba(0, 242, 254, 0.12);
+  color: var(--accent-cyan);
+  border-color: rgba(0, 242, 254, 0.4);
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+}
+
 .sliders {
   display: flex;
   flex-direction: column;

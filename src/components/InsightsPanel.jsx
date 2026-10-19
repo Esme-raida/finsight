@@ -1,16 +1,10 @@
 import StatusBadge from "./StatusBadge.jsx";
 import Bullet from "./Bullets.jsx";
 import MetricCard from "./MetricCard.jsx";
+import { formatNaira } from "../utils/format.js";
 
 export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, ongoingMonthlyBurn,
     getFinancialScenarioReport, isLoading }) {
-
-    //clean currency helper to prevent something like this ₦-350,000
-
-    const formatNaira = (amt) => {
-        const absoluteValue = Math.abs(amt).toLocaleString();
-        return amt < 0 ? `-₦${absoluteValue}` : `₦${absoluteValue}`
-    };
 
 
     const getVerdict = (cashLeft, runwayMonths) => {
@@ -47,7 +41,7 @@ export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, ong
                 <ul className="bullets">
                     <Bullet
                         strongValue="Can you afford it?"
-                        strongSpan={cashLeft > 0 ? `The commitment leaves ${formatNaira(cashLeft)}} available each month.` : `The commitment exceeds your monthly available cash`}
+                        strongSpan={cashLeft > 0 ? `The commitment leaves ${formatNaira(cashLeft)} available each month.` : `The commitment exceeds your monthly available cash`}
                     />
                     <Bullet
                         strongValue="Maintain a buffer"
@@ -72,7 +66,7 @@ export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, ong
             <div className="metrics">
                 <MetricCard
                     metricLabel="MINIMUM INCOME NEEDED"
-                    metricValue={"₦" + ongoingMonthlyBurn.toLocaleString()}
+                    metricValue={formatNaira(ongoingMonthlyBurn)}
                 />
 
                 <MetricCard
