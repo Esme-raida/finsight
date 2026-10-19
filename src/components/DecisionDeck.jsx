@@ -41,7 +41,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
             if (data.savings !== null) onUpdate('savings', data.savings);
             if (data.decisionCost !== null) onUpdate('decisionCost', data.decisionCost);
             if (data.decisionTitle !== null) onUpdate('query', data.decisionTitle);
-
+            if (data.expenseType !== null) onUpdate('expenseType', data.expenseType);
             if (hasUpdates) {
                 setFeedback({
                     type: "success",
@@ -179,7 +179,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
                 {/*DECISION'S MONTHLY COST*/}
                 <div className="slider-4">
                     <Slider
-                        label="DECISION'S MONTHLY COST"
+                        label={financials.expenseType === "one_time" ? "ONE-TIME PURCHASE COST" : "DECISION'S MONTHLY COST"}
                         displayValue={`₦${financials.decisionCost.toLocaleString()}`}
                         min="0"
                         max={Math.max(5000000, Number(financials.decisionCost))}
@@ -209,7 +209,7 @@ export default function DecisionDeck({ financials, balance, cashLeft, incomeDrop
 
                 {/*MONTHLY IMPACT*/}
                 <SummaryMetric
-                    label="MONTHLY DECISION'S COST"
+                    label={financials.expenseType === "one_time" ? "ONE-TIME PURCHASE" : "DECISION'S MONTHLY COST"}
                     value={`₦${financials.decisionCost.toLocaleString()}`}
                     isDanger={false}
                 />

@@ -5,7 +5,7 @@ export default function Slider({ label, displayValue, min, max, step, value, onC
                 <label>{label}</label>
                 <span className="display-value">{displayValue}</span>
             </div>
-            <input type="range" min={min} max={max} step={step} value={value} onChange={onChange} />
+            <input type="range" aria-label={label} min={min} max={max} step={step} value={value} onChange={onChange} />
         </div>
     )
 }

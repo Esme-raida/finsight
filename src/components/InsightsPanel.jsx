@@ -2,7 +2,7 @@ import StatusBadge from "./StatusBadge.jsx";
 import Bullet from "./Bullets.jsx";
 import MetricCard from "./MetricCard.jsx";
 
-export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, totalExpensesPlusNewDecision,
+export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, ongoingMonthlyBurn,
     getFinancialScenarioReport, isLoading }) {
 
     //clean currency helper to prevent something like this ₦-350,000
@@ -47,7 +47,7 @@ export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, tot
                 <ul className="bullets">
                     <Bullet
                         strongValue="Can you afford it?"
-                        strongSpan={cashLeft > 0 ? `The commitment leaves ${formatNaira(cashLeft)} available each month.` : `The commitment exceeds your monthly available cash`}
+                        strongSpan={cashLeft > 0 ? `The commitment leaves ${formatNaira(cashLeft)}} available each month.` : `The commitment exceeds your monthly available cash`}
                     />
                     <Bullet
                         strongValue="Maintain a buffer"
@@ -55,7 +55,7 @@ export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, tot
                     />
                     <Bullet
                         strongValue="What if things get tough?"
-                        strongSpan={`With a 20% drop in your income, it would leave ₦${newCashLeft.toLocaleString()} per month after the decision.`}
+                        strongSpan={`With a 20% drop in your income, it would leave ${formatNaira(newCashLeft)} per month after the decision.`}
                     />
                 </ul>
                 <button onClick={getFinancialScenarioReport} disabled={isLoading}>
@@ -72,7 +72,7 @@ export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, tot
             <div className="metrics">
                 <MetricCard
                     metricLabel="MINIMUM INCOME NEEDED"
-                    metricValue={"₦" + totalExpensesPlusNewDecision.toLocaleString()}
+                    metricValue={"₦" + ongoingMonthlyBurn.toLocaleString()}
                 />
 
                 <MetricCard

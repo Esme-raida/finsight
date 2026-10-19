@@ -12,6 +12,7 @@ const defaultFinancials = {
   expenses: 900000,
   decisionCost: 350000,
   query: "Can I afford to hire a designer for ₦350,000 per month?",
+  expenseType: "recurring"
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -34,23 +35,29 @@ function App() {
   const balance = financials.income - financials.expenses;
 
   //cash left after decision
-  const cashLeft = balance - financials.decisionCost;
+  const cashLeft = financials.expenseType === "one_time" ? balance : balance - financials.decisionCost;
 
   //Income drop
   const incomeDropby20Percent = (financials.income * 0.8);
-  const totalExpensesPlusNewDecision = financials.expenses + financials.decisionCost;
-  const newCashLeft = incomeDropby20Percent - totalExpensesPlusNewDecision;
+  // For recurring costs, monthly burn increases. For one-time purchases, monthly burn stays baseline expenses.
+  const ongoingMonthlyBurn = financials.expenseType === "one_time"
+    ? financials.expenses
+    : financials.expenses + financials.decisionCost;
+  const newCashLeft = incomeDropby20Percent - ongoingMonthlyBurn;
+
 
   //runway : how many months savings can last if revenue drops to 0
   //with zero burn, savings lasts indefinitely
-  const runway = totalExpensesPlusNewDecision > 0 ?
-    (financials.savings / totalExpensesPlusNewDecision) : 99.0;
+  const runway = financials.expenseType === "one_time" ?
+    (financials.expenses > 0 ? (financials.savings - financials.decisionCost) / financials.expenses : 99.0) :
+    (ongoingMonthlyBurn > 0 ? (financials.savings / ongoingMonthlyBurn) : 99.0);
   const runwayMonths = runway.toFixed(1);
 
   /*this function was created so that each component can update financials without calling setFinancials
   directly and spreading, then getting the target value again and again*/
   const UpdateFinancials = (field, value) => {
-    setFinancials((prev) => ({ ...prev, [field]: field === 'query' ? value : Number(value) }))
+    setFinancials((prev) =>
+      ({ ...prev, [field]: field === "query" || field === "expenseType" ? value : Number(value) }))
   }
   //To track the loading state while the LLM returns data 
   const [isLoading, setIsLoading] = useState(false);
@@ -121,9 +128,9 @@ function App() {
         <InsightsPanel
           balance={balance}
           cashLeft={cashLeft}
+          ongoingMonthlyBurn={ongoingMonthlyBurn}
           runwayMonths={runwayMonths}
           newCashLeft={newCashLeft}
-          totalExpensesPlusNewDecision={totalExpensesPlusNewDecision}
           onUpdate={UpdateFinancials}
           getFinancialScenarioReport={getFinancialScenarioReport}
           isLoading={isLoading} />

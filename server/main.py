@@ -23,8 +23,7 @@ async def call_gemini_with_retry(prompt, config=None, retries=2):
         config={"temperature": 0}
     for attempt in range(retries + 1):
         try:
-            return await asyncio.to_thread (
-                client.models.generate_content,
+            return await client.aio.models.generate_content(
                 model="gemini-3.5-flash-lite",
                 contents=prompt,
                 config=config
@@ -46,7 +45,6 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware, 
     allow_origins=["*"], # Allows Vercel preview URLs, production domains, and localhost
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -68,13 +66,13 @@ class ExtractScenario(BaseModel):
     savings: Optional[float] = None
     decisionCost: Optional[float] = None
     decisionTitle: Optional[str] = None
+    expenseType: Optional[Literal["recurring", "one_time"]] = "recurring"
 
 class ExtractRequest(BaseModel):
     text: str
 
 # Structured output mold for the Fractional CFO briefing
 class CFOReportResponse(BaseModel):
-    verdict: Literal["SAFE TO PROCEED", "PROCEED WITH CAUTION", "CRITICAL RISK - HOLD"]
     bottom_line_summary: str
     worst_case_analysis: str
     tactical_recommendations: list[str]
@@ -86,17 +84,26 @@ class ScenarioRequest(BaseModel):
     expenses: float
     savings: float
     decisionCost: float
-
+    expenseType: Literal["recurring", "one_time"] = "recurring"
 
 #============================= DETERMINISTIC MATH ENGINE =============================#
 
-def calculate_metrics(income: float, expenses: float, savings: float, decision_cost: float) -> dict:
-    baseline_cashflow = income - expenses
-    total_monthly_burn = expenses + decision_cost
-    cash_left = income - total_monthly_burn
-
-    runway_months = round(savings / total_monthly_burn, 1) if total_monthly_burn > 0 else 99.0
-
+def calculate_metrics(income: float, expenses: float, savings: float, 
+                    decision_cost: float, expenseType: str = "recurring") -> dict:
+    #CapEx - Capital Expenditure (One-off Purchases)
+    if expenseType == "one_time" :
+        effective_savings = savings - decision_cost
+        total_monthly_burn = expenses
+        cash_left = income - total_monthly_burn
+        runway_months = round(effective_savings / total_monthly_burn, 1) if total_monthly_burn > 0 else 99.0
+    #OpEx - Operational Expenditure (Recurring Costs)
+    else:
+        effective_savings = savings
+        total_monthly_burn = expenses + decision_cost
+        cash_left = income - total_monthly_burn
+        runway_months = round(effective_savings / total_monthly_burn, 1) if total_monthly_burn > 0 else 99.0
+    
+    #For determining the verdict
     if cash_left > 0 and runway_months >= 6.0:
         verdict = "SAFE TO PROCEED"
     elif (cash_left >= 0 and 3.0 <= runway_months < 6.0) or (cash_left < 0 and runway_months >= 6.0):
@@ -112,7 +119,7 @@ def calculate_metrics(income: float, expenses: float, savings: float, decision_c
         "expenses": expenses,
         "savings": savings,
         "decision_cost": decision_cost,
-        "baseline_cashflow": baseline_cashflow,
+        "effective_savings": effective_savings,
         "total_monthly_burn": total_monthly_burn,
         "cash_left": cash_left,
         "runway_months": runway_months,
@@ -129,8 +136,17 @@ async def generate_financial_scenario_report(scenario: ScenarioRequest):
         income=scenario.income,
         expenses=scenario.expenses,
         savings=scenario.savings,
-        decision_cost=scenario.decisionCost
+        decision_cost=scenario.decisionCost,
+        expenseType=scenario.expenseType
     )
+
+    cost_label = (
+        f"₦{metrics['decision_cost']:,.0f} (one-time purchase)" 
+        if scenario.expenseType == "one_time" 
+        else f"₦{metrics['decision_cost']:,.0f}/month (recurring cost)"
+    )
+
+    clean_query = scenario.query.replace("</untrusted_user_query>", "").replace("<untrusted_user_query>", "").strip()
 
     prompt = f"""You are an elite Fractional CFO, with 20 years of experience who has guided High-Net Worth
     individuals and independent operators in Nigeria's ever-evolving and dynamic economy with their
@@ -150,12 +166,12 @@ async def generate_financial_scenario_report(scenario: ScenarioRequest):
     Here is the scenario data:
     <scenario_data>
     <untrusted_user_query>
-    {scenario.query}
+    {clean_query}
     </untrusted_user_query>
     - Monthly Income: ₦{metrics['income']:,.0f}
     - Baseline Expenses: ₦{metrics['expenses']:,.0f}
     - Savings Buffer: ₦{metrics['savings']:,.0f}
-    - Proposed Decision Cost: ₦{metrics['decision_cost']:,.0f}/month
+    - Proposed Decision Cost: {cost_label}
     - Cash Left After Decision: ₦{metrics['cash_left']:,.0f}/month
     - Emergency Runway: {metrics['runway_months']} months
     - Mathematical Baseline Status: {metrics['verdict']}
@@ -171,16 +187,22 @@ async def generate_financial_scenario_report(scenario: ScenarioRequest):
             "response_schema": CFOReportResponse
         }
     )
+    #Converting Gemini's JSON text into a Python dictionary
+    report_data = json.loads(response.text)
+    #Injecting the mathematical verdict into the dictionary
+    report_data["verdict"] = metrics["verdict"]
 
+    #returning react
     return {
         "status": "success",
         "metrics": metrics,
-        "report": json.loads(response.text)
+        "report": report_data
     }
 
 @app.post("/api/extract")
 
 async def extract_financial_data(request: ExtractRequest):
+    clean_text = request.text.replace("</user_query>", "").replace("<user_query>", "").strip()
     prompt = f"""
     You are an expert world-class Financial Data Extraction Specialist. 
     Your job is to read the raw text provided by a user and extract financial 
@@ -194,9 +216,12 @@ async def extract_financial_data(request: ExtractRequest):
     3. Extract a short summary of the decision into "decisionTitle" (e.g., "Hire a designer").
     4. If any numerical value is not mentioned or impossible to determine, set its value to null.
     5. Do not invent or assume numbers that were not provided.
+    6.Determine the expenseType: If it is a one-off purchase(like buying a laptop, equipemnet,
+    car, or upfront fee), use "one_time". If it is an ongoing monthly cost(like salary, monthly rent,
+    or subscription), use "recurring".
     USER INPUT TO ANALYZE:
     <user_query>
-    {request.text}
+    {clean_text}
     </user_query>
     """
  

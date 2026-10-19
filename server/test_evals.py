@@ -9,7 +9,7 @@ import sys
 from main import generate_financial_scenario_report, ScenarioRequest
 import asyncio
 
-# Configure UTF-8 encoding on Windows to print the Naira (₦) symbol cleanly
+#Configured UTF-8 encoding on Windows to print the Naira (₦) symbol cleanly
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
@@ -164,7 +164,9 @@ async def run_evals ():
             income=case["income"],
             expenses=case["expenses"],
             savings=case["savings"],
-            decisionCost=case["decisionCost"]
+            decisionCost=case["decisionCost"],
+            #using .get meaning if a test does not specify it defualts to recurring
+            expenseType=case.get("expenseType", "recurring")
         )
 
         #calling the main function
