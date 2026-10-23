@@ -55,12 +55,13 @@ test_cases = [
         "expected": "CRITICAL RISK - HOLD"  # Deficit spending + Runway: 1.2 mo
     },
     {
-        "scenario": "The Lekki Overhead Trap: Rent + diesel eating 85% of income, testing ₦400k workspace",
-        "savings": 1800000,
-        "income": 1200000,
-        "expenses": 1020000,
-        "decisionCost": 400000,
-        "expected": "CRITICAL RISK - HOLD"  # -₦220k monthly bleed + Runway: 1.3 mo
+        "scenario": "The Generator Trap: Has ₦800k in savings, testing buying ₦2.5M industrial generator upfront",
+        "savings": 800000,
+        "income": 1500000,
+        "expenses": 600000,
+        "decisionCost": 2500000,
+        "expenseType": "one_time",
+        "expected": "CRITICAL RISK - HOLD"  # Cost exceeds entire savings buffer
     },
 
     # ==================== 2. PROCEED WITH CAUTION (5 Cases) ==================== #
@@ -97,12 +98,13 @@ test_cases = [
         "expected": "PROCEED WITH CAUTION"  # Runway: 4.7 mo after revenue drop
     },
     {
-        "scenario": "Equipment Lease: Upgrading camera rig @ ₦350k/mo with ₦3.2M in savings",
-        "savings": 3200000,
-        "income": 1400000,
-        "expenses": 550000,
-        "decisionCost": 350000,
-        "expected": "PROCEED WITH CAUTION"  # Runway: 3.6 mo margin
+        "scenario": "Studio Gear Purchase: ₦6M savings, buying ₦3.8M camera rig upfront, leaves 4.2 mo buffer",
+        "savings": 6000000,
+        "income": 1800000,
+        "expenses": 520000,
+        "decisionCost": 3800000,
+        "expenseType": "one_time",
+        "expected": "PROCEED WITH CAUTION"  # Positive cashflow, but savings squeezed to 4.2 months
     },
 
     # ==================== 3. SAFE TO PROCEED (5 Cases) ==================== #
@@ -123,12 +125,13 @@ test_cases = [
         "expected": "SAFE TO PROCEED"  # ₦2.9M surplus, 9.5 mo runway
     },
     {
-        "scenario": "Productivity Stack Upgrade: ₦6M savings, ₦2M income, adding ₦80k/mo Figma + Claude AI tools",
-        "savings": 6000000,
-        "income": 2000000,
-        "expenses": 500000,
-        "decisionCost": 80000,
-        "expected": "SAFE TO PROCEED"  # ₦1.42M surplus, 10.3 mo runway
+        "scenario": "Workstation Upgrade: ₦15M savings, buying ₦2.2M MacBook Pro upfront with deep buffer",
+        "savings": 15000000,
+        "income": 3500000,
+        "expenses": 800000,
+        "decisionCost": 2200000,
+        "expenseType": "one_time",
+        "expected": "SAFE TO PROCEED"  # ₦12.8M remaining savings = 16.0 mo runway
     },
     {
         "scenario": "Private Studio with Deep Cushion: ₦8M savings, ₦2.2M income, moving to ₦180k private desk",
@@ -149,6 +152,34 @@ test_cases = [
 ]
 
 # ===================== THE EVALUATION LOOP ===================== #
+
+#This function helps us inspect the AI's work and decide if it passes or fails 
+def check_report_quality(case, report):
+    #from what we generated we get report and from what we expect, we get case
+    summary = report["bottom_line_summary"].lower()
+    verdict = report["verdict"]
+
+    #Did the verdict match the math?
+    if verdict != case["expected"]:
+        return False, f"Verdict mismatch: expected {case['expected']}, got {verdict}"
+
+    #Did the AI give reckless advice on a high-risk scenario?
+    if verdict == "CRITICAL RISK - HOLD":
+        reckless_words = ["safe to proceed", "go ahead", "comfortable to buy", "recommend buying"]
+        for phrase in reckless_words:
+            if phrase in summary:
+                return False, f"Reckless AI advice: model said '{phrase}' during CRITICAL RISK"
+
+    #Did the AI give enough substantive recommendations?
+    if len(report["tactical_recommendations"]) < 3:
+        return False, "Less than 3 tactical recommendations provided"
+
+    #Is the summary substantial?
+    if len(summary) < 40:
+        return False, "Summary is too short or empty"
+
+    return True, "All checks passed"
+
 async def run_evals ():
     passed = 0
     total = len(test_cases)
@@ -174,15 +205,18 @@ async def run_evals ():
         result = await generate_financial_scenario_report(scenario)
         duration = round(time.time() - start_time, 2)
      
+
         report = result["report"]
         actual_verdict = report["verdict"]
 
-        # The simple check: did the model include the expected verdict?
-        if case["expected"] == actual_verdict and len(report["tactical_recommendations"]) >= 3:
+        #Comprehensive AI Quality & Safety Evaluation
+        is_pass, reason = check_report_quality(case, report)
+
+        if is_pass:
             print(f"  [PASS]: Verdict [{actual_verdict}] ({duration}s)")
             passed += 1
         else:
-            print(f"  [FAIL]: Expected [{case['expected']}], Got [{actual_verdict}] ({duration}s)")
+            print(f"  [FAIL]: ({duration}s) -> Reason: {reason}")
 
     # The accuracy calculation
     accuracy = (passed / total) * 100
