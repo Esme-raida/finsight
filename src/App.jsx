@@ -57,7 +57,8 @@ function App() {
   //runway : how many months savings can last if revenue drops to 0
   //with zero burn, savings lasts indefinitely
   const runway = financials.expenseType === "one_time" ?
-    (financials.expenses > 0 ? (financials.savings - financials.decisionCost) / financials.expenses : 99.0) :
+    (financials.decisionCost > financials.savings) ? 0.0 :
+      (financials.expenses > 0 ? (financials.savings - financials.decisionCost) / financials.expenses : 99.0) :
     (ongoingMonthlyBurn > 0 ? (financials.savings / ongoingMonthlyBurn) : 99.0);
   const runwayMonths = runway.toFixed(1);
 

@@ -4,12 +4,15 @@ import MetricCard from "./MetricCard.jsx";
 import { formatNaira } from "../utils/format.js";
 
 export default function InsightsPanel({ cashLeft, runwayMonths, newCashLeft, ongoingMonthlyBurn,
-    getFinancialScenarioReport, isLoading }) {
+    getFinancialScenarioReport, isLoading, expenseType, decisionCost, savings }) {
 
 
     const getVerdict = (cashLeft, runwayMonths) => {
-        const runway = Number(runwayMonths);
+        if (expenseType === "one_time" && decisionCost >= savings) {
+            return "CRITICAL RISK - HOLD"
+        }
 
+        const runway = Number(runwayMonths);
         if (cashLeft > 0 && runway >= 6) {
             return "SAFE TO PROCEED";
         }

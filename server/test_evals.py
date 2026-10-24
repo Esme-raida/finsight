@@ -6,8 +6,10 @@ from google import genai
 from dotenv import load_dotenv
 import time
 import sys
-from main import generate_financial_scenario_report, ScenarioRequest
 import asyncio
+from models import ScenarioRequest
+from calculator import calculate_metrics
+from cfo_service import generate_financial_scenario_report
 
 #Configured UTF-8 encoding on Windows to print the Naira (₦) symbol cleanly
 if hasattr(sys.stdout, 'reconfigure'):
@@ -200,13 +202,28 @@ async def run_evals ():
             expenseType=case.get("expenseType", "recurring")
         )
 
-        #calling the main function
+
+        #Math calculation
+        metrics = calculate_metrics(
+            income=scenario.income,
+            expenses=scenario.expenses,
+            savings=scenario.savings,
+            decision_cost=scenario.decisionCost,
+            expenseType=scenario.expenseType
+        )
+
+
+        #AI evaluation
         start_time = time.time()
-        result = await generate_financial_scenario_report(scenario)
+        result = await generate_financial_scenario_report(
+            query=scenario.query, 
+            metrics=metrics, 
+            expense_type=scenario.expenseType
+        )
         duration = round(time.time() - start_time, 2)
      
 
-        report = result["report"]
+        report = result
         actual_verdict = report["verdict"]
 
         #Comprehensive AI Quality & Safety Evaluation
