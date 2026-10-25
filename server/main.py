@@ -62,7 +62,8 @@ async def get_report( scenario: ScenarioRequest, session: Session = Depends(get_
         savings=metrics["savings"],
         monthly_burn=metrics["total_monthly_burn"],
         runway_months=metrics["runway_months"],
-        verdict=metrics["verdict"]
+        verdict=metrics["verdict"],
+        summary = report_data["bottom_line_summary"]
     )
     session.add(db_scenario) #staging it - it works like git add .
     session.commit() #this actually commits the staged data and writes to the SQLite file on th disk

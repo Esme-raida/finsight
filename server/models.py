@@ -1,5 +1,6 @@
 from typing import Optional, Literal
 from sqlmodel import SQLModel, Field
+from datetime import datetime, timezone
 
 #SCHEMAS(PYDANTIC BLUEPRINTS)
 
@@ -14,10 +15,13 @@ class Scenario(SQLModel, table=True):
     monthly_burn: float
     runway_months: float
     verdict: str
+    summary: Optional[str] = None #can be string or none 
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== API SCHEMAS (REQUEST / RESPONSE) ==================== #
 
-#for output
+
+#RESPONSE(output)#
 class ExtractScenario(SQLModel):
     income: Optional[float] = None
     expenses: Optional[float] = None
@@ -35,7 +39,9 @@ class CFOReportResponse(SQLModel):
     worst_case_analysis: str
     tactical_recommendations: list[str]
 
-#for input
+
+
+#REQUEST(input)#
 class ScenarioRequest(SQLModel):
     query: str
     income: float = Field(..., ge=0, description="Monthly income in Naira")

@@ -6,7 +6,12 @@ export default function Header({ onReset }) {
                 <h2>FINSIGHT</h2>
             </div>
             <div className="status-pill">
-                <span className="live-pill">LIVE MODEL</span>
+                <span className="history-btn" onClick={onOpenHistory}>
+                    📜 History {historyCount > 0 &&
+                        <span className="history-badge">
+                            {historyCount}
+                        </span>}
+                </span>
                 <button className="reset-button" onClick={onReset} title="Reset to defaults">↺</button>
             </div>
         </header>

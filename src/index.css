@@ -122,7 +122,7 @@ body {
   gap: 0.75rem;
 }
 
-.live-pill {
+.history-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-glass);
   padding: 0.4rem 0.85rem;
@@ -130,7 +130,27 @@ body {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.history-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-glow);
+  transform: translateY(-1px);
+}
+
+.history-badge {
+  background: var(--accent-cyan, #00f0ff);
+  color: #0b0f17;
+  font-weight: 700;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 9999px;
 }
 
 .reset-button {

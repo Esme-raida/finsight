@@ -19,6 +19,15 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function App() {
 
+  const [history, setHistory] = useState([]);
+  const [isHistoryOpen, setHistoryOpen] = useState(false);
+
+  function fetchHistory() {
+    //call /api/scenarios when the app loads
+    fetch(`${API_BASE_URL}/api/scenarios`);
+  }
+  useEffect(() => { fetchHistory() }, []);
+
   useEffect(() => {
     // Silently wake up the backend as soon as the app loads on mobile/desktop
     fetch(`${API_BASE_URL}/`).catch(() => {
@@ -99,6 +108,7 @@ function App() {
       const result = await response.json(); //this parses the JSON
       console.log(result)
       setData(result);
+      fetchHistory();
       setError(null); //Clear any previous error!
 
       //receives whatever was thrown
@@ -112,7 +122,9 @@ function App() {
   return (
     <div className="app-layout">
       {/*Top Header*/}
-      <Header onReset={handleReset} />
+      <Header onReset={handleReset}
+        onOpenHistory={() => setHistoryOpen(true)}
+        historyCount={history.length} />
       {/*Error  Feedback Banner*/}
       {error && (
         <div className="error-div">
@@ -142,7 +154,11 @@ function App() {
           newCashLeft={newCashLeft}
           onUpdate={UpdateFinancials}
           getFinancialScenarioReport={getFinancialScenarioReport}
-          isLoading={isLoading} />
+          isLoading={isLoading}
+          expenseType={financials.expenseType}
+          savings={financials.savings}
+          decisionCost={financials.decisionCost}
+        />
       </main>
       {data &&
         <FinancialScenarioModal data={data}
