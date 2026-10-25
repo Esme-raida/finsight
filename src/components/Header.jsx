@@ -1,4 +1,4 @@
-export default function Header({ onReset }) {
+export default function Header({ onReset, onOpenHistory, historyCount }) {
     return (
         <header className="top-nav">
             <div className="brand-name">
