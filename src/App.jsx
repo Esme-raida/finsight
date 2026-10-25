@@ -22,10 +22,20 @@ function App() {
   const [history, setHistory] = useState([]);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
 
-  function fetchHistory() {
-    //call /api/scenarios when the app loads
-    fetch(`${API_BASE_URL}/api/scenarios`);
+  const fetchHistory = async () => {
+    try {
+      //call /api/scenarios when the app loads
+      const response = await fetch(`${API_BASE_URL}/api/scenarios`);
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+      }
+    } catch (error) {
+      console.error("Failed to load scenario  in history:", error)
+    }
   }
+
+
   useEffect(() => { fetchHistory() }, []);
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import json
 from dotenv import load_dotenv
 from google import genai
 from models import CFOReportResponse, ExtractScenario
+from fastapi import HTTPException
 
 #Loads the environment variables to grab the GEMINI API Key
 load_dotenv()
